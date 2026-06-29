@@ -25,6 +25,7 @@ const (
 	SDKInitEvent    EventEnum = "vwo_fmeSdkInit"
 	SDKUsageStats   EventEnum = "vwo_sdkUsageStats"
 	DebuggerEvent   EventEnum = "vwo_sdkDebug"
+	FeTrackUsage    EventEnum = "vwo_feTrackUsage"
 )
 
 // GetValue returns the string value of the event enum

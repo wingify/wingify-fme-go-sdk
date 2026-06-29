@@ -35,6 +35,7 @@ type Settings struct {
 	PollInterval             int                        `json:"pollInterval,omitempty"`
 	SDKMetaInfo              map[string]interface{}     `json:"sdkMetaInfo,omitempty"`
 	IsWebConnectivityEnabled *bool                      `json:"isWebConnectivityEnabled,omitempty"`
+	IsTrackingUsageEnabled   *bool                      `json:"isMAU,omitempty"`
 }
 
 // GetFeatures returns the features
@@ -104,4 +105,13 @@ func (s *Settings) GetIsWebConnectivityEnabled() bool {
 		return true
 	}
 	return *s.IsWebConnectivityEnabled
+}
+
+// GetIsTrackingUsageEnabled returns whether usage tracking is enabled.
+// Defaults to false when the field is not present in settings.
+func (s *Settings) GetIsTrackingUsageEnabled() bool {
+	if s.IsTrackingUsageEnabled == nil {
+		return false
+	}
+	return *s.IsTrackingUsageEnabled
 }

@@ -114,6 +114,33 @@ func GetTrackUserPayloadData(serviceContainer interfaces.ServiceContainerInterfa
 	return removeNullValues(payload)
 }
 
+// GetTrackUsagePayloadData constructs payload data for tracking feature usage
+func GetTrackUsagePayloadData(serviceContainer interfaces.ServiceContainerInterface, context *user.WingifyUserContext, vwoMeta map[string]interface{}) map[string]interface{} {
+	properties := GetEventBasePayload(serviceContainer.GetSettingsManager(), context.GetID(), enums.FeTrackUsage.GetValue(), context.GetUserAgent(), context.GetIPAddress(), 0)
+
+	// set sessionId and uuid if they are present in the context
+	if context.GetSessionId() != 0 {
+		properties.D.SessionID = context.GetSessionId()
+	}
+	if context.GetUUID() != "" {
+		properties.D.VisID = context.GetUUID()
+		properties.D.MsgID = GenerateMsgID(context.GetUUID())
+	}
+
+	if vwoMeta != nil {
+		properties.D.Event.Props.Meta = vwoMeta
+	}
+
+	// Log impression for track usage
+	serviceContainer.GetLoggerService().Debug(log.BuildMessage(log.DebugLogMessagesEnum["IMPRESSION_FOR_TRACK_USAGE"], map[string]interface{}{
+		"accountId": serviceContainer.GetSettingsManager().GetAccountID(),
+		"userId":    context.GetID(),
+	}))
+
+	payload := convertToMap(properties)
+	return removeNullValues(payload)
+}
+
 // GetTrackGoalPayloadData constructs payload data for tracking goals/events
 func GetTrackGoalPayloadData(serviceContainer interfaces.ServiceContainerInterface, userID string, eventName string, context *user.WingifyUserContext, eventProperties map[string]interface{}) map[string]interface{} {
 	properties := GetEventBasePayload(serviceContainer.GetSettingsManager(), userID, eventName, context.UserAgent, context.IPAddress, 0)

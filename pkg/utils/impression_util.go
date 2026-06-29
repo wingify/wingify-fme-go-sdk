@@ -22,6 +22,7 @@ import (
 
 	"github.com/wingify/wingify-fme-go-sdk/pkg/constants"
 	"github.com/wingify/wingify-fme-go-sdk/pkg/enums"
+	log "github.com/wingify/wingify-fme-go-sdk/pkg/log_messages"
 	"github.com/wingify/wingify-fme-go-sdk/pkg/models/user"
 	"github.com/wingify/wingify-fme-go-sdk/pkg/packages/interfaces"
 )
@@ -80,6 +81,51 @@ func CreateAndSendImpressionForVariationShown(
 			"variationName": variationName,
 			"featureKey":    featureKey,
 			"campaignType":  campaignType,
+		})
+	}
+}
+
+// CreateAndSendImpressionForUsageTracking creates and sends an impression for a usage tracking event.
+func CreateAndSendImpressionForUsageTracking(
+	serviceContainer interfaces.ServiceContainerInterface,
+	context *user.WingifyUserContext,
+	featureKey string,
+) {
+	// Get base properties for the event
+	properties := GetEventsBaseProperties(
+		serviceContainer.GetSettingsManager(),
+		enums.FeTrackUsage.GetValue(),
+		EncodeURIComponent(context.GetUserAgent()),
+		context.GetIPAddress(),
+	)
+
+	// Construct payload data for tracking the usage
+	var vwoMeta map[string]interface{}
+	if serviceContainer.GetInitOptions() != nil {
+		vwoMeta = serviceContainer.GetInitOptions().WingifyMeta
+	}
+
+	payload := GetTrackUsagePayloadData(
+		serviceContainer,
+		context,
+		vwoMeta,
+	)
+
+	// Log info about track usage dispatch
+	serviceContainer.GetLoggerService().Info(log.BuildMessage(log.InfoLogMessagesEnum["TRACK_USAGE_DISPATCHED"], map[string]interface{}{
+		"accountId":  serviceContainer.GetSettingsManager().GetAccountID(),
+		"userId":     context.GetID(),
+		"featureKey": featureKey,
+	}))
+
+	// Check if batch event queue is available, if not available then send the event immediately
+	if serviceContainer.GetBatchEventQueue() != nil && serviceContainer.GetBatchEventQueue().IsInitialized() {
+		// Enqueue the event to the batch queue for future processing
+		serviceContainer.GetBatchEventQueue().Enqueue(payload)
+	} else {
+		// Send the event immediately if batch event queue is not available
+		SendPostAPIRequest(serviceContainer, properties, payload, context, map[string]interface{}{
+			"featureKey": featureKey,
 		})
 	}
 }

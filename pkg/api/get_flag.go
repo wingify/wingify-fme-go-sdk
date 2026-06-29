@@ -38,6 +38,8 @@ import (
 // GetFlag retrieves a feature flag value and returns the decision object
 func GetFlag(featureKey string, context *user.WingifyUserContext, serviceContainer interfaces.ServiceContainerInterface) models.GetFlagResponse {
 	getFlag := models.NewGetFlag(false, nil, context.GetUUID(), context.GetSessionId())
+	// Flag for usage tracking - false if no varition shown call is sent
+	isVariationShownFired := false
 	shouldCheckForExperimentsRules := false
 
 	passedRulesInformation := make(map[string]interface{})
@@ -80,6 +82,13 @@ func GetFlag(featureKey string, context *user.WingifyUserContext, serviceContain
 		serviceContainer.GetLoggerService().Error("FEATURE_NOT_FOUND", map[string]interface{}{
 			"featureKey": featureKey,
 		}, serviceContainer.GetDebuggerService().GetStandardDebugProps())
+
+		// Case: Feature not found
+		// If usage tracking is enabled, send usage tracking impression
+		if serviceContainer.GetSettings().GetIsTrackingUsageEnabled() {
+			utils.CreateAndSendImpressionForUsageTracking(serviceContainer, context, featureKey)
+		}
+
 		return getFlag
 	}
 
@@ -103,11 +112,18 @@ func GetFlag(featureKey string, context *user.WingifyUserContext, serviceContain
 						if variation.GetID() != 0 {
 							// Log using proper structured logging
 							serviceContainer.GetLoggerService().Info(log.BuildMessage(log.InfoLogMessagesEnum["STORED_VARIATION_FOUND"], map[string]interface{}{
-								"variationKey":   variation.GetName(),
+								"variationKey":   variation.GetKey(),
 								"userId":         context.GetID(),
 								"experimentType": "experiment",
 								"experimentKey":  storedData.ExperimentKey,
 							}))
+
+							// Case: Feature found in storage
+							// Send usage tracking for cached experiment decision if usage tracking is enabled
+							if serviceContainer.GetSettings().GetIsTrackingUsageEnabled() {
+								utils.CreateAndSendImpressionForUsageTracking(serviceContainer, context, featureKey)
+							}
+
 							variables := variation.GetVariables()
 							return models.NewGetFlag(true, convertVariationsToVariables(variables), getFlag.GetUUID(), getFlag.GetSessionId())
 						}
@@ -197,6 +213,8 @@ func GetFlag(featureKey string, context *user.WingifyUserContext, serviceContain
 					context,
 					featureKey,
 				)
+				// set isVariationShownFired to true as the rollout impression is sent
+				isVariationShownFired = true
 			}
 		}
 	} else if !shouldCheckForExperimentsRules {
@@ -251,6 +269,9 @@ func GetFlag(featureKey string, context *user.WingifyUserContext, serviceContain
 							context,
 							featureKey,
 						)
+						// set isVariationShownFired to true as the experiment impression is sent (for whitelisted user)
+						// this prevents sending usage tracking impression for the experiment campaign when checked at the bottom
+						isVariationShownFired = true
 					}
 				}
 				break
@@ -276,6 +297,8 @@ func GetFlag(featureKey string, context *user.WingifyUserContext, serviceContain
 					context,
 					featureKey,
 				)
+				// set isVariationShownFired to true as the experiment impression is sent.
+				isVariationShownFired = true
 			}
 		}
 	}
@@ -330,6 +353,13 @@ func GetFlag(featureKey string, context *user.WingifyUserContext, serviceContain
 			context,
 			featureKey,
 		)
+		isVariationShownFired = true
+	}
+
+	// Send usage tracking call when no primary variationShown event was dispatched.
+	// If a primary event was fired, the server already has the usage tracking signal.
+	if serviceContainer.GetSettings().GetIsTrackingUsageEnabled() && !isVariationShownFired {
+		utils.CreateAndSendImpressionForUsageTracking(serviceContainer, context, featureKey)
 	}
 
 	return getFlag
