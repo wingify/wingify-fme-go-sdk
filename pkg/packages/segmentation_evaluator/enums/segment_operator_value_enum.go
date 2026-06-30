@@ -37,6 +37,7 @@ const (
 	SegmentOperatorIP              SegmentOperatorValue = "ip_address"
 	SegmentOperatorBrowserVersion  SegmentOperatorValue = "browser_version"
 	SegmentOperatorOSVersion       SegmentOperatorValue = "os_version"
+	SegmentOperatorWebCampaignVariation SegmentOperatorValue = "campaignVariation"
 )
 
 // String returns the string value of the operator
@@ -64,6 +65,7 @@ func SegmentOperatorValueFromString(value string) (SegmentOperatorValue, bool) {
 		"ip_address":      SegmentOperatorIP,
 		"browser_version": SegmentOperatorBrowserVersion,
 		"os_version":      SegmentOperatorOSVersion,
+		"campaignVariation": SegmentOperatorWebCampaignVariation,
 	}
 
 	op, exists := operators[value]

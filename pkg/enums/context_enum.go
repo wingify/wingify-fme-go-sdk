@@ -31,6 +31,7 @@ const (
 	ContextSessionID                   ContextEnum = "sessionId"
 	ContextUseIdForWeb                 ContextEnum = "useIdForWeb"
 	ContextBucketingSeed               ContextEnum = "bucketingSeed"
+	ContextPlatformVariables           ContextEnum = "platformVariables"
 )
 
 // GetValue returns the string value of the context enum

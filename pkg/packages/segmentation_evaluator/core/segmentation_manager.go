@@ -25,6 +25,7 @@ import (
 	"github.com/wingify/wingify-fme-go-sdk/pkg/models/user"
 	"github.com/wingify/wingify-fme-go-sdk/pkg/packages/gateway"
 	"github.com/wingify/wingify-fme-go-sdk/pkg/packages/interfaces"
+	"github.com/wingify/wingify-fme-go-sdk/pkg/packages/segmentation_evaluator/enums"
 	"github.com/wingify/wingify-fme-go-sdk/pkg/packages/segmentation_evaluator/evaluators"
 )
 
@@ -150,5 +151,54 @@ func (sm *SegmentationManager) ValidateSegmentation(dsl interface{}, properties 
 		}
 	}
 
+	// Guard condition: if DSL has campaignVariation node but no webTestingCampaigns in context
+	if sm.hasCampaignVariationNode(dslMap) {
+		if sm.evaluator.Context == nil {
+			return false
+		}
+		platformVars := sm.evaluator.Context.GetPlatformVariables()
+		if platformVars == nil || platformVars["webTestingCampaigns"] == nil {
+			return false
+		}
+	}
+
 	return sm.evaluator.IsSegmentationValid(dslMap, properties)
+}
+
+/*
+Helper function to check if the DSL has campaignVariation node
+@params:
+
+	dsl - interface
+
+@returns:
+
+	bool - true if DSL has campaignVariation node, false otherwise
+*/
+func (sm *SegmentationManager) hasCampaignVariationNode(dsl interface{}) bool {
+	if dsl == nil {
+		return false
+	}
+
+	switch node := dsl.(type) {
+	// case when dsl is a map
+	case map[string]interface{}:
+		for key, value := range node {
+			if key == enums.SegmentOperatorWebCampaignVariation.String() {
+				return true
+			}
+			if sm.hasCampaignVariationNode(value) {
+				return true
+			}
+		}
+	// case when dsl is an array
+	case []interface{}:
+		for _, item := range node {
+			if sm.hasCampaignVariationNode(item) {
+				return true
+			}
+		}
+	}
+
+	return false
 }

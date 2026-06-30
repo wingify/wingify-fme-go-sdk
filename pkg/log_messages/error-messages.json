@@ -40,6 +40,14 @@
   "INVALID_USER_AGENT_IN_CONTEXT_FOR_PRE_SEGMENTATION": "userAgent is required in context to evaluate user-agent pre-segmentation",
   "GATEWAY_SERVICE_REQUIRED_FOR_PRE_SEGMENTATION": "Gateway service is required for {preSegmentationType} pre-segmentation. Please provide the gatewayService in the SDK configuration while invoking init API.",
   "INVALID_ATTRIBUTE_LIST_FORMAT": "Invalid inList operand format",
+  
+  "INVALID_WEB_TESTING_CAMPAIGNS_DUPLICATE_KEY": "Duplicate key found in webTestingCampaigns JSON",
+  "INVALID_WEB_TESTING_CAMPAIGNS_JSON": "webTestingCampaigns JSON is malformed or not an object",
+  "INVALID_WEB_TESTING_CAMPAIGNS_TYPE": "webTestingCampaigns must be a string or map. Got type: {kind}",
+  "INVALID_WEB_TESTING_CAMPAIGNS": "webTestingCampaigns passed inside platformVariables is invalid. Both campaignId and variationId must be an integer or a string representing an integer.",
+  "INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_TYPE": "campaignVariation operand must be a string or number. Got type: {type}",
+  "INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_EMPTY": "campaignVariation operand cannot be empty",
+  "INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_FORMAT": "Invalid format for campaignVariation operand: {operand}",
 
   "ATTRIBUTES_MAP_ERROR": "Attributes map must contain atleast 1 key-value pair",
 

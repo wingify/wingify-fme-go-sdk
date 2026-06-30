@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"reflect"
 
 	"github.com/wingify/wingify-fme-go-sdk/pkg/constants"
 	"github.com/wingify/wingify-fme-go-sdk/pkg/models/user"
@@ -196,6 +197,44 @@ func (s *SegmentOperandEvaluator) EvaluateUserAgentDSL(dslOperandValue string, c
 	tagValue = fmt.Sprint(processedValues["tagValue"])
 	operandType := preProcessOperandValue.OperandType
 	return s.ExtractResult(operandType, strings.TrimSpace(strings.ReplaceAll(fmt.Sprint(processedValues["operandValue"]), "\"", "")), tagValue)
+}
+
+// EvaluateCampaignVariationDSL evaluates web testing campaign variation DSL
+func (s *SegmentOperandEvaluator) EvaluateCampaignVariationDSL(dslOperandValue interface{}, context *user.WingifyUserContext) bool {
+	var operandString string
+	if operandFloat, ok := dslOperandValue.(float64); ok {
+		operandString = strconv.FormatFloat(operandFloat, 'f', -1, 64)
+	} else if operandStr, ok := dslOperandValue.(string); ok {
+		operandString = operandStr
+	} else {
+		// Try to handle other numeric types just in case
+		valueStr := fmt.Sprint(dslOperandValue)
+		if _, err := strconv.ParseFloat(valueStr, 64); err == nil {
+			operandString = valueStr
+		} else {
+			kind := ""
+			if dslOperandValue != nil {
+				kind = reflect.TypeOf(dslOperandValue).Kind().String()
+			}
+			s.serviceContainer.GetLoggerService().Error("INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_TYPE", map[string]interface{}{"type": kind}, s.serviceContainer.GetDebuggerService().GetStandardDebugProps())
+			return false
+		}
+	}
+
+	trimmed := strings.TrimSpace(operandString)
+	if len(trimmed) == 0 {
+		s.serviceContainer.GetLoggerService().Error("INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_EMPTY", nil, s.serviceContainer.GetDebuggerService().GetStandardDebugProps())
+		return false
+	}
+
+	assignedVariationsByCampaignID := segmentUtils.ParseWebTestingCampaignsFromContext(context, s.serviceContainer)
+	result, invalidFormat := segmentUtils.EvaluateWebTestingCampaignVariation(trimmed, assignedVariationsByCampaignID)
+
+	if invalidFormat {
+		s.serviceContainer.GetLoggerService().Error("INVALID_WEB_TESTING_CAMPAIGN_VARIATION_OPERAND_FORMAT", map[string]interface{}{"operand": trimmed}, s.serviceContainer.GetDebuggerService().GetStandardDebugProps())
+	}
+
+	return result
 }
 
 // EvaluateStringOperandDSL evaluates a given string tag value against a DSL operand value

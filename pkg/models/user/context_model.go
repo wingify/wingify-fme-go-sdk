@@ -34,6 +34,7 @@ type WingifyUserContext struct {
 	SessionId                   int64                  `json:"sessionId,omitempty"`
 	UUID                        string                 `json:"uuid,omitempty"`
 	BucketingSeed               string                 `json:"bucketingSeed,omitempty"`
+	PlatformVariables           map[string]interface{} `json:"platformVariables,omitempty"`
 }
 
 // NewWingifyUserContext creates a new WingifyUserContext from a map
@@ -94,6 +95,12 @@ func NewWingifyUserContext(context map[string]interface{}) *WingifyUserContext {
 	if bucketingSeed, ok := context[enums.ContextBucketingSeed.GetValue()]; ok {
 		if bucketingSeedStr, ok := bucketingSeed.(string); ok {
 			wingifyUserContext.BucketingSeed = bucketingSeedStr
+		}
+	}
+
+	if pv, ok := context[enums.ContextPlatformVariables.GetValue()]; ok && pv != nil {
+		if pvMap, ok := pv.(map[string]interface{}); ok {
+			wingifyUserContext.PlatformVariables = pvMap
 		}
 	}
 
@@ -183,4 +190,17 @@ func (c *WingifyUserContext) GetBucketingSeed() string {
 // SetBucketingSeed sets the custom bucketing seed
 func (c *WingifyUserContext) SetBucketingSeed(bucketingSeed string) {
 	c.BucketingSeed = bucketingSeed
+}
+
+// GetPlatformVariables returns platform variables for segmentation (e.g. webTestingCampaigns).
+func (c *WingifyUserContext) GetPlatformVariables() map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+	return c.PlatformVariables
+}
+
+// SetPlatformVariables sets platform variables on the context.
+func (c *WingifyUserContext) SetPlatformVariables(pv map[string]interface{}) {
+	c.PlatformVariables = pv
 }

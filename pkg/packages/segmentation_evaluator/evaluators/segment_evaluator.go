@@ -94,6 +94,8 @@ func (s *SegmentEvaluator) IsSegmentationValid(dsl map[string]interface{}, prope
 		return s.SegmentOperandEvaluator.EvaluateStringOperandDSL(subDsl.(string), s.Context, enums.SegmentOperatorBrowserVersion)
 	case enums.SegmentOperatorOSVersion:
 		return s.SegmentOperandEvaluator.EvaluateStringOperandDSL(subDsl.(string), s.Context, enums.SegmentOperatorOSVersion)
+	case enums.SegmentOperatorWebCampaignVariation:
+		return s.SegmentOperandEvaluator.EvaluateCampaignVariationDSL(subDsl, s.Context)
 	default:
 		return false
 	}

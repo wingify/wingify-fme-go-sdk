@@ -37,7 +37,7 @@ const (
 	DefaultEventsPerRequest    = 100
 
 	// SDKVersion is shared across host profiles (wire protocol unchanged).
-	SDKVersion = "1.55.0"
+	SDKVersion = "1.60.0"
 
 	// Settings constants
 	SettingsExpiry  = 10000000
